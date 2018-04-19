@@ -21,7 +21,7 @@ proc isEnabledInTree*(n: Node): bool
 
 import rod.component
 
-var gTotalNodesAmount*: int
+var gTotalNodesCount*: int
 
 proc newNode*(name: string = nil): Node =
     result.new()
@@ -392,7 +392,7 @@ proc resolveNodeRefs(n: Node) =
                 s(foundNode)
 
 proc nodeWillBeRemovedFromSceneView*(n: Node) =
-    dec gTotalNodesAmount
+    dec gTotalNodesCount
     if not n.components.isNil:
         for c in n.components: c.componentNodeWillBeRemovedFromSceneView()
     if not n.children.isNil:
@@ -400,7 +400,7 @@ proc nodeWillBeRemovedFromSceneView*(n: Node) =
     n.mSceneView = nil
 
 proc nodeWasAddedToSceneView*(n: Node, v: SceneView) =
-    inc gTotalNodesAmount
+    inc gTotalNodesCount
     if n.mSceneView.isNil:
         n.mSceneView = v
         if not n.components.isNil:
