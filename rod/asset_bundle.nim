@@ -205,13 +205,16 @@ proc validateAssetBundle(src: string): bool =
     except:
         removeDir(src)
         return false
-    
+
     for key, hash in infoFile:
+        if key.endsWith(".info"):
+            continue
+
         let path = src / key
         if not fileExists(path) or hash.getStr() != sha1hexdigest(readFile(path)):
             removeDir(src)
             return false
-    
+
     writeFile(src / ".validated", "OK")
 
     result = true
@@ -260,12 +263,12 @@ when not defined(js) and not defined(emscripten) and not defined(windows):
                 let client = newHttpClient(sslContext = sslCtx)
             else:
                 let client = newHttpClient(sslContext = nil)
-            
+
             client.onProgressChanged = proc(total, progress, speed: BiggestInt) =
                 let dctx = cast[DownloadCtx](ctx)
                 if not dctx.progress.isNil:
                     deallocShared(dctx.progress)
-                    
+
                 var progressMsg = $total & "," & $progress & "," & $speed
                 let cprogressMsg = cast[cstring](allocShared(progressMsg.len + 1))
                 copyMem(cprogressMsg, addr progressMsg[0], progressMsg.len + 1)
@@ -311,11 +314,11 @@ when not defined(js) and not defined(emscripten) and not defined(windows):
                     return
 
                 discard tryRemoveFile(zipFilePath)
-                
+
                 if not validateAssetBundle(destPath):
                     cb("Assed bundle is invalid")
                     return
-                
+
                 cb(nil),
             onProgress
         )
