@@ -4,6 +4,7 @@ author        = "Anonymous"
 description   = "Graphics engine"
 license       = "MIT"
 
+installDirs   = @["rod", "editor"]
 bin           = @["rod/tools/rodasset/rodasset", "editor/rodedit"]
 
 # Dependencies
@@ -13,7 +14,7 @@ requires "variant"
 requires "os_files"
 requires "https://github.com/yglukhov/imgtools"
 requires "cligen"
-requires "https://github.com/yglukhov/untar"
+requires "untar"
 requires "tempfile"
 requires "https://github.com/yglukhov/threadpools"
 requires "https://github.com/yglukhov/preferences"
