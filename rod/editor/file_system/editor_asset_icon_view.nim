@@ -1,8 +1,9 @@
 import nimx / [ text_field, image, view, formatted_text, context, button,
                 render_to_image, window, panel_view, image_preview,
-                view_event_handling ]
+                view_event_handling, pathutils ]
 import nimx.assets.asset_loading
-import tables, os, streams
+import tables, os, streams, logging
+
 when not defined(android) and not defined(ios) and not defined(emscripten):
     import os_files.file_info
 
@@ -98,6 +99,9 @@ proc createFilePreview*(p: PathNode, r: Rect, compact: bool): FilePreview =
         iconPos.x = 0.0
         iconSize = newSize(r.height, r.height)
 
+    var icoPath = p.fullPath
+    normalizePath(icoPath)
+
     let res = result
     case res.kind:
     of akSound:
@@ -113,7 +117,7 @@ proc createFilePreview*(p: PathNode, r: Rect, compact: bool): FilePreview =
         res.icon = imgView
 
     of akContainer:
-        let img_data = iconBitmapForFile(p.fullPath, 128, 128)
+        let img_data = iconBitmapForFile(icoPath, 128, 128)
         if not img_data.isNil:
             let img = imageWithBitmap(cast[ptr uint8](img_data), 128, 128, 4)
             let imgView = new(ImageIconView)
@@ -130,7 +134,7 @@ proc createFilePreview*(p: PathNode, r: Rect, compact: bool): FilePreview =
         res.icon.backgroundColor = newColor(0.5, 0.8, 0.6, 1.0)
 
     else:
-        let img_data = iconBitmapForFile(p.fullPath, 128, 128)
+        let img_data = iconBitmapForFile(icoPath, 128, 128)
         if not img_data.isNil:
             let img = imageWithBitmap(cast[ptr uint8](img_data), 128, 128, 4)
             let imgView = new(ImageIconView)
