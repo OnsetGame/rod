@@ -59,8 +59,8 @@ method deserialize*(vs: VectorShape, j: JsonNode, serializer: Serializer) =
     serializer.deserializeValue(j, "shapeType", vs.shapeType)
 
 method getBBox*(vs: VectorShape): BBox =
-    result.minPoint = newVector3(-vs.size.width/2.0, -vs.size.height/2.0, 0.0)
-    result.maxPoint = newVector3(vs.size.width/2.0, vs.size.height/2.0, 0.0)
+    result.minPoint = newVector3(-vs.size.x/2.0, -vs.size.y/2.0, 0.0)
+    result.maxPoint = newVector3(vs.size.x/2.0, vs.size.y/2.0, 0.0)
 
 method visitProperties*(vs: VectorShape, p: var PropertyVisitor) =
     p.visitProperty("size", vs.size)
@@ -75,8 +75,8 @@ method beforeDraw*(vs: VectorShape, index: int): bool =
     c.fillColor = vs.color
     c.strokeWidth = vs.strokeWidth
     c.strokeColor = vs.strokeColor
-    let strokedWidth = vs.size.width + vs.strokeWidth
-    let strokedHeight = vs.size.height + vs.strokeWidth
+    let strokedWidth = vs.size.x + vs.strokeWidth
+    let strokedHeight = vs.size.y + vs.strokeWidth
     let r = newRect(-strokedWidth/2.0, -strokedHeight/2.0, strokedWidth, strokedHeight)
 
     case vs.shapeType:

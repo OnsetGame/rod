@@ -153,7 +153,6 @@ proc getEnvCt(k: string): string {.compileTime.} =
     else:
         result = staticExec("echo $" & k)
     result.removeSuffix()
-    if result == "": result = nil
 
 proc assetBundleDescriptor*(path: static[string]): AssetBundleDescriptor {.compileTime.} =
     const rabFilePath = path / "config.rab"
@@ -236,7 +235,7 @@ when not defined(js) and not defined(emscripten) and not defined(windows):
         if not ctx.progress.isNil:
             deallocShared(ctx.progress)
         if ctx.errorMsg.isNil:
-            ctx.handler(nil)
+            ctx.handler("")
         else:
             ctx.handler("Could not download or extract: " & $ctx.errorMsg)
             deallocShared(ctx.errorMsg)
@@ -303,7 +302,7 @@ when not defined(js) and not defined(emscripten) and not defined(windows):
 
         downloadFile(url, zipFilePath,
             proc(err: string) =
-                if not err.isNil:
+                if err.len != 0:
                     cb(err)
                     return
 
@@ -319,7 +318,7 @@ when not defined(js) and not defined(emscripten) and not defined(windows):
                     cb("Assed bundle is invalid")
                     return
 
-                cb(nil),
+                cb(""),
             onProgress
         )
 
@@ -337,7 +336,7 @@ var getURLForAssetBundle*: proc(hash: string): string
 proc downloadAssetBundle*(abd: AssetBundleDescriptor, handler: proc(err: string), onProgress: proc(total, progress, speed: BiggestInt) = nil) =
     if abd.isDownloadable:
         if abd.isDownloaded:
-            handler(nil)
+            handler("")
         else:
             when not defined(js) and not defined(emscripten) and not defined(windows) and not defined(rodplugin):
                 assert(not getURLForAssetBundle.isNil)
@@ -346,7 +345,7 @@ proc downloadAssetBundle*(abd: AssetBundleDescriptor, handler: proc(err: string)
             else:
                 assert(false, "Not supported")
     else:
-        handler(nil)
+        handler("")
 
 proc newAssetBundle(abd: AssetBundleDescriptor): AssetBundle =
     when defined(js) or defined(emscripten):
@@ -363,10 +362,10 @@ proc newAssetBundle(abd: AssetBundleDescriptor): AssetBundle =
 proc loadAssetBundle*(abd: AssetBundleDescriptor, handler: proc(mountPath: string, ab: AssetBundle, err: string), onProgress: proc(total, progress, speed: BiggestInt) = nil) =
     abd.downloadAssetBundle(
         proc(err: string) =
-            if err.isNil:
+            if err.len == 0:
                 let ab = newAssetBundle(abd)
                 ab.init() do():
-                    handler(abd.path, ab, nil)
+                    handler(abd.path, ab, "")
             else:
                 warn "Asset bundle error for ", abd.hash, " (", abd.path, "): " , err
                 handler(abd.path, nil, err),
@@ -388,11 +387,11 @@ proc loadAssetBundles*(abds: openarray[AssetBundleDescriptor], handler: proc(mou
 
     proc load() =
         if i == len:
-            handler(mountPaths, abs, nil)
+            handler(mountPaths, abs, "")
         else:
             abds[i].loadAssetBundle(
                 proc(mountPath: string, ab: AssetBundle, err: string) =
-                    if not err.isNil:
+                    if err.len != 0:
                         handler(mountPaths, abs, err)
                     else:
                         abs[i] = ab

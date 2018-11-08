@@ -52,9 +52,9 @@ proc setCompositionMarker(c: AEComposition, m: AEMarker): Animation=
     result.animate prog in pStart..pEnd:
         c.allCompAnim.onAnimate(prog)
 
-proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[string] = nil): Animation
+proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[string] = @[]): Animation
 
-proc applyLayerSettings*(c: AEComposition, cl: AELayer, marker: AEMarker, exceptions: seq[string] = nil): ComposeMarker=
+proc applyLayerSettings*(c: AEComposition, cl: AELayer, marker: AEMarker, exceptions: seq[string] = @[]): ComposeMarker=
     let lc = cl.node.componentIfAvailable(AEComposition)
 
     if not lc.isNil:
@@ -86,7 +86,7 @@ proc applyLayerSettings*(c: AEComposition, cl: AELayer, marker: AEMarker, except
 
         result = newComposeMarker(max(0.0, layerIn), min(layerOut, 1.0), prop)
 
-proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[string] = nil): Animation =
+proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[string] = @[]): Animation =
     var marker: AEMarker
     for m in c.markers:
         if m.name == marker_name:
@@ -98,7 +98,7 @@ proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[st
         var composeMarkers = newSeq[ComposeMarker]()
         composeMarkers.add(newComposeMarker(0.0, 1.0, prop))
 
-        if not exceptions.isNil:
+        if exceptions.len != 0:
             for ael in c.layers:
                 if ael.node.name notin exceptions:
                     var innerExceptions = exceptions.filter(proc(s:string):bool = s.startsWith(ael.node.name&delimiter))
@@ -123,13 +123,13 @@ proc compositionNamed*(c: AEComposition, marker_name: string, exceptions: seq[st
         result.onAnimate = proc(p: float)=
             ca.onProgress(p)
 
-proc play*(c: AEComposition, name: string, exceptions: seq[string] = nil): Animation {.discardable.} =
+proc play*(c: AEComposition, name: string, exceptions: seq[string] = @[]): Animation {.discardable.} =
     result = c.compositionNamed(name, exceptions)
 
     if not c.node.sceneView.isNil:
         c.node.sceneView.addAnimation(result)
 
-proc playAll*(c: AEComposition, exceptions: seq[string] = nil): Animation {.discardable.} =
+proc playAll*(c: AEComposition, exceptions: seq[string] = @[]): Animation {.discardable.} =
     result = c.play(aeAllCompositionAnimation)
 
 proc findNodeWithAEComp(node: Node, name: string): Node =

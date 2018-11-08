@@ -217,7 +217,7 @@ method init*(v: FileSystemView, r: Rect)=
     horLayout.addSubview(v.contentView)
     v.contentView.setCompact(false)
     v.contentView.numberOfItems = proc(): int =
-        if not v.mCurrentPathNode.isNil and not v.mCurrentPathNode.children.isNil:
+        if not v.mCurrentPathNode.isNil and v.mCurrentPathNode.children.len != 0:
             v.currentPath = v.mCurrentPathNode.fullPath
             return v.mCurrentPathNode.children.len
 

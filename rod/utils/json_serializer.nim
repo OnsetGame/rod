@@ -53,7 +53,7 @@ proc visit*(b: JsonSerializer, v: Image, key: string) =
         echo " >> new serializer image path ", path, " origin ", filePath(v)
 
 proc visit*[T](b: JsonSerializer, v: seq[T], key: string) =
-    if not v.isNil:
+    if v.len != 0:
         b.node[key] = write(v)
 
 proc visit*[T](b: JsonSerializer, v: T, key: string) =

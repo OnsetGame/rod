@@ -76,14 +76,14 @@ proc adjustImageNode(tool: ImgTool, im: ImageOccurence) =
         result["orig"] = %relativePathToPath(tool.originalResPath, im.path) #im.path
     doAssert(not im.spriteSheet.isNil)
 
-    if im.info.textureKey.isNil:
+    if im.info.textureKey.len == 0:
         # We are in the sprite component
         im.info.parentComponent["fileNames"].elems[im.info.frameIndex] = result
     else:
         # We are in the mesh component
         im.info.parentComponent[im.info.textureKey]= result
 
-    if im.info.textureKey.isNil:
+    if im.info.textureKey.len == 0:
         # This image occurence is inside a sprite. If image alpha is cropped
         # from top or left we have to adjust frameOffsets in the Sprite node
         if im.srcInfo.rect.x > 0 or im.srcInfo.rect.y > 0:
@@ -115,9 +115,6 @@ proc checkCompositionRefs(c: JsonNode, compPath, originalResPath: string) =
         raise newException(Exception, "Missing compositions")
 
 proc collectImageOccurences(tool: ImgTool): seq[ImageOccurence] {.inline.} =
-    result = @[]
-    shallow(result)
-
     var referredImages = initSet[string]()
 
     for i, c in tool.compositions:

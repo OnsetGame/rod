@@ -32,8 +32,8 @@ proc findAnimatableProperty(n: Node, propName: string): Variant =
 
     n.visitProperties(visitor)
 
-    if res.isEmpty and not n.components.isNil:
-        for k, v in n.components:
+    if res.isEmpty:
+        for v in n.components:
             v.visitProperties(visitor)
             if not res.isEmpty: break
 
@@ -142,8 +142,7 @@ proc animationWithCollada*(root: Node, anim: ColladaAnimation): Animation =
                 echo "Could not find node to attach animation to: $#" % [anim.channel.target]
                 continue
             let progressSetter = animationAttach(nodeToAttach, subanim, animDuration)
-            if not isNil(progressSetter):
-                animProgressSetters.add(progressSetter)
+            animProgressSetters.add(progressSetter)
     else:
         if anim.channel.isNil:
             return
@@ -153,8 +152,7 @@ proc animationWithCollada*(root: Node, anim: ColladaAnimation): Animation =
             return
         else:
             let progressSetter = animationAttach(nodeToAttach, anim, animDuration)
-            if not isNil(progressSetter):
-                animProgressSetters.add(progressSetter)
+            animProgressSetters.add(progressSetter)
 
     result.onAnimate = proc(progress: float) =
         for ps in animProgressSetters:

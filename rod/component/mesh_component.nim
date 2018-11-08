@@ -218,7 +218,6 @@ proc load(m: MeshComponent) =
         m.loadFunc = nil
 
 proc prepareBoneMap(m: MeshComponent) =
-    m.boneMap = newSeq[Bone]()
     let stride = int(m.vboData.vertInfo.stride / sizeof(Glfloat))
     let vertCount = int(m.currMesh.len / stride)
 
@@ -239,7 +238,7 @@ proc setupAndDraw*(m: MeshComponent) =
         gl.enable(gl.CULL_FACE)
 
     if not m.skeleton.isNil:
-        if m.boneMap.isNil:
+        if m.boneMap.len == 0:
             m.prepareBoneMap()
 
         m.skeleton.update()

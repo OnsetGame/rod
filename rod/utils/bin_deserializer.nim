@@ -13,10 +13,8 @@ type
         curCompPath*: string
         disableAwake*: bool
 
-    UncheckedArr {.unchecked.} [T] = array[0, T]
-
     BufferView*[T] = object
-        mData*: ptr UncheckedArr[T]
+        mData*: ptr UncheckedArray[T]
         len*: int
 
 template `[]`*[T](v: BufferView[T], idx: int): T =
@@ -72,7 +70,7 @@ proc getBuffer*(b: BinDeserializer, T: typedesc, len: int): BufferView[T] =
         let s = StringStream(b.stream)
         let offset = b.getPosition()
         assert(s.data.len > offset + len)
-        result.mData = cast[ptr UncheckedArr[T]](cast[pointer](addr s.data[offset]))
+        result.mData = cast[ptr UncheckedArray[T]](cast[pointer](addr s.data[offset]))
         result.len = len
         b.setPosition(offset + len * sizeof(T))
 
@@ -131,12 +129,6 @@ proc rewindToComposition*(b: BinDeserializer, name: string) =
         raise newException(Exception, "Could not rewind to " & name)
     b.stream.setPosition(pos)
 
-proc setLenX[T](s: var seq[T], sz: int) =
-    if s.isNil:
-        s = newSeq[T](sz)
-    else:
-        s.setLen(sz)
-
 proc readUint8*(b: BinDeserializer): uint8 {.inline.} =
     cast[uint8](b.stream.readInt8())
 
@@ -191,10 +183,8 @@ proc read*[T](b: BinDeserializer, data: var T) =
 
     elif T is seq:
         let sz = b.readInt16()
-        if sz == 0:
-            data = nil
-        else:
-            data.setLenX(sz)
+        data.setLen(sz)
+        if sz != 0:
             b.read(openarray[type(data[0])](data))
 
     elif T is string:
@@ -241,8 +231,8 @@ proc visit*(b: BinDeserializer, v: var Image) =
 
 proc visit*(b: BinDeserializer, images: var seq[Image], frameOffsets: var seq[Point]) =
     let sz = b.readInt16()
-    images.setLenX(sz)
-    frameOffsets.setLenX(sz)
+    images.setLen(sz)
+    frameOffsets.setLen(sz)
     let buf = b.getBuffer(int16, sz)
     for i in 0 ..< sz:
         b.getImageForIndex(buf[i], images[i], frameOffsets[i])

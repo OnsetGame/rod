@@ -23,7 +23,7 @@ import rod.component
 
 var gTotalNodesCount*: int
 
-proc newNode*(name: string = nil): Node =
+proc newNode*(name: string = ""): Node =
     result.new()
     result.mScale = newVector3(1, 1, 1)
     result.mRotation = newQuaternion()
@@ -136,9 +136,6 @@ proc createComponentForNode(n: Node, name: string): Component =
         result.componentNodeWasAddedToSceneView()
 
 proc addComponent*(n: Node, name: string): Component =
-    if n.components.isNil:
-        n.components = newSeq[Component]()
-
     result = createComponentForNode(n, name)
     n.components.add(result)
 
@@ -155,25 +152,15 @@ proc addComponent*(n: Node, T: typedesc, index: int): T =
     n.insertComponent(result, index)
 
 proc getComponent*(n: Node, name: string): Component =
-    if n.components.isNil:
-        return nil
-
     for v in n.components:
         if v.className == name:
             return v
 
-    return nil
-
 proc getComponent*(n: Node, T: typedesc[Component]): T =
-    if n.components.isNil:
-        return nil
-
     for v in n.components:
         type TT = T
         if v of TT:
             return v.TT
-
-    return nil
 
 proc component*(n: Node, name: string): Component =
     result = n.getComponent(name)
@@ -191,14 +178,9 @@ proc componentIfAvailable*(n: Node, T: typedesc[Component]): T =
     result = n.getComponent(T)
 
 proc setComponent*(n: Node, name: string, c: Component) =
-    if n.components.isNil:
-        n.components = newSeq[Component]()
     n.components.add(c)
 
 proc insertComponent*(n: Node, c: Component, index: int) =
-    if n.components.isNil:
-        n.components = newSeq[Component]()
-
     let i = clamp(index, 0, n.components.len)
     c.componentNodeWasAddedToSceneView()
     n.components.insert(c, i)
@@ -210,16 +192,15 @@ proc removeComponent*(n: Node, c: Component) =
         n.components.delete(compPos)
 
 proc removeComponent*(n: Node, name: string) =
-    if not n.components.isNil:
-        let c = n.getComponent(name)
+    let c = n.getComponent(name)
+    if not c.isNil:
         n.removeComponent(c)
 
 proc removeComponent*(n: Node, T: typedesc[Component]) = n.removeComponent(T.name)
 
 proc update(n: Node) =
-    if not n.components.isNil:
-        for k, v in n.components:
-            v.update()
+    for k, v in n.components:
+        v.update()
 
 proc recursiveUpdate*(n: Node) =
     n.update()
@@ -307,9 +288,7 @@ proc drawNode*(n: Node, recursive: bool, drawTable: TableRef[int, seq[Node]]) =
         drawNodeAux(n, recursive, drawTable)
     elif not drawTable.isNil:
         var drawNodes = drawTable.getOrDefault(n.layer)
-        if drawNodes.isNil:
-            drawNodes = newSeq[Node]()
-            shallow(drawNodes)
+        shallow(drawNodes)
 
         drawNodes.add(n)
         drawTable[n.layer] = drawNodes
@@ -401,20 +380,16 @@ proc nodeWillBeRemovedFromSceneView*(n: Node, withCleanup = false) =
     dec gTotalNodesCount
     if withCleanup:
         n.cleanup()
-    if not n.components.isNil:
-        for c in n.components: c.componentNodeWillBeRemovedFromSceneView()
-    if not n.children.isNil:
-        for c in n.children: c.nodeWillBeRemovedFromSceneView(withCleanup)
+    for c in n.components: c.componentNodeWillBeRemovedFromSceneView()
+    for c in n.children: c.nodeWillBeRemovedFromSceneView(withCleanup)
     n.mSceneView = nil
 
 proc nodeWasAddedToSceneView*(n: Node, v: SceneView) =
     inc gTotalNodesCount
     if n.mSceneView.isNil:
         n.mSceneView = v
-        if not n.components.isNil:
-            for c in n.components: c.componentNodeWasAddedToSceneView()
-        if not n.children.isNil:
-            for c in n.children: c.nodeWasAddedToSceneView(v)
+        for c in n.components: c.componentNodeWasAddedToSceneView()
+        for c in n.children: c.nodeWasAddedToSceneView(v)
     else:
         # There may be cases where this proc has already been called.
         # E.g. component adds child node to its node in
@@ -451,7 +426,7 @@ proc addChild*(n, c: Node) =
     if not n.mSceneView.isNil:
         c.nodeWasAddedToSceneView(n.mSceneView)
 
-proc newChild*(n: Node, childName: string = nil): Node =
+proc newChild*(n: Node, childName: string = ""): Node =
     result = newNode(childName)
     n.addChild(result)
 
@@ -651,7 +626,7 @@ proc loadComposition*(n: Node, url: string, onComplete: proc() = nil) =
     let url = fixupCompositionUrlExtension(url)
 
     loadAsset(url) do(j: JsonNode, err: string):
-        assert err.isNil, err
+        assert err.len == 0, err
 
         try:
             n.loadComposition(j, url, onComplete)
@@ -663,7 +638,7 @@ proc loadComposition*(n: Node, url: string, onComplete: proc() = nil) =
 import rod.animation.property_animation
 
 proc deserialize*(n: Node, j: JsonNode, s: Serializer) =
-    if n.name.isNil:
+    if n.name.len == 0:
         s.deserializeValue(j, "name", n.name)
     s.deserializeValue(j, "translation", n.position)
     s.deserializeValue(j, "scale", n.mScale)
@@ -693,8 +668,8 @@ proc deserialize*(n: Node, j: JsonNode, s: Serializer) =
                 let comp = n.component(k)
                 comp.deserialize(c, s)
 
-    let compositionRef = j{"compositionRef"}.getStr(nil)
-    if not compositionRef.isNil and not n.name.endsWith(".placeholder"):
+    let compositionRef = j{"compositionRef"}.getStr()
+    if compositionRef.len != 0 and not n.name.endsWith(".placeholder"):
         s.startAsyncOp()
         n.loadComposition(s.toAbsoluteUrl(compositionRef)) do():
             s.endAsyncOp()
@@ -751,7 +726,7 @@ proc serialize*(n: Node, s: Serializer): JsonNode =
     result.add("affectsChildren", s.getValue(n.affectsChildren))
     result.add("enabled", s.getValue(n.enabled))
 
-    if not n.components.isNil and n.components.len > 0:
+    if n.components.len > 0:
         var componentsNode = newJArray()
         result.add("components", componentsNode)
 
@@ -763,7 +738,7 @@ proc serialize*(n: Node, s: Serializer): JsonNode =
                 jcomp.add("_c", %value.className())
                 componentsNode.add(jcomp)
 
-    if not n.children.isNil and n.children.len > 0:
+    if n.children.len > 0:
         var childsNode = newJArray()
         result.add("children", childsNode)
         for child in n.children:
@@ -853,16 +828,15 @@ proc getTreeDistance*(x, y: Node): int =
     result = iy - ix
 
 proc rayCast*(n: Node, r: Ray, castResult: var seq[RayCastInfo]) =
-    if not n.components.isNil:
-        for name, component in n.components:
-            var distance: float32
-            let res = component.rayCast(r, distance)
+    for name, component in n.components:
+        var distance: float32
+        let res = component.rayCast(r, distance)
 
-            if res:
-                var castInfo: RayCastInfo
-                castInfo.node = n
-                castInfo.distance = distance
-                castResult.add(castInfo)
+        if res:
+            var castInfo: RayCastInfo
+            castInfo.node = n
+            castInfo.distance = distance
+            castResult.add(castInfo)
 
     for c in n.children:
         c.rayCast(r, castResult)
@@ -966,10 +940,7 @@ proc newNode*(b: BinDeserializer, compName: string): Node =
                     old.children = subComp.children
                 old.animations = subComp.animations
                 for c in subComp.components: c.node = old
-                if old.components.isNil:
-                    old.components = subComp.components
-                else:
-                    old.components.add(subComp.components)
+                old.components.add(subComp.components)
                 #old.translation = subComp.translation
                 #old.rotation = subComp.rotation
                 #old.scale = subComp.scale

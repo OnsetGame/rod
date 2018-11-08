@@ -78,7 +78,7 @@ proc splitPropertyName(name: string, nodeName: var string, compIndex: var int, p
     # nodeName.compIndex.propName # looked up only in specified component
     propName = name
     compIndex = -1
-    nodeName = nil
+    nodeName = ""
     let dotIdx2 = name.rfind('.')
     if dotIdx2 != -1:
         propName = name.substr(dotIdx2 + 1)
@@ -170,7 +170,7 @@ proc writeNameComponents(b: BinSerializer, nodes: seq[JsonNode]) =
     for n in nodes:
         let name = n{"name"}
         if name.isNil:
-            b.write(string(nil))
+            b.write("")
         else:
             b.write(name.str)
 
@@ -228,7 +228,7 @@ proc writeSingleComponent(b: BinSerializer, className: string, j: JsonNode, comp
                 s(foundNode)
 
     c.serialize(b)
-    n.children = nil # Break cycle to let gc collect it faster
+    n.children = @[] # Break cycle to let gc collect it faster
 
 proc writeAECompositionComponent(b: BinSerializer, j: JsonNode, nodes: seq[JsonNode]) =
     let jbufs = j{"buffers"}
@@ -416,7 +416,7 @@ proc writeComposition(b: BinSerializer, comp: JsonNode, path: string) =
 
     b.write(int16(nodesCount))
     b.writeArrayNoLen(childParentRelations)
-    childParentRelations = nil
+    childParentRelations = @[]
 
     var builtInComponents: set[BuiltInComponentType]
 
@@ -524,7 +524,7 @@ proc writeCompositions(b: BinSerializer, comps: openarray[JsonNode], paths: open
     s.align(4)
     s.write(b.stream.data)
     b.stream = nil
-    b.stringEntries = nil
+    b.stringEntries = @[]
 
 proc writeCompositions*(b: BinSerializer, comps: openarray[JsonNode], paths: openarray[string], file: string, images: JsonNode) =
     let s = newFileStream(file, fmWrite)
